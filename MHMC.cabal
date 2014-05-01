@@ -1,0 +1,34 @@
+Name:           MHMC
+Version:        0.0.1
+Synopsis:       Minimalist Haskell MPD Client
+Description:    Curses-based MPD client coded entirely in Haskell
+Category:       Sound
+
+License:        MIT
+License-file:   LICENSE
+Author:         Wes Caldwell
+
+Maintainer:     Wes Caldwell <wcaldwell.email@gmail.com>
+Stability:      Pre-alpha
+Homepage:       https://github.com/killmous/MHMC
+Bug-reports:    https://github.com/killmous/MHMC/issues
+
+Build-Type:     Simple
+Cabal-Version:  >= 1.10
+
+Extra-Source-Files:
+    README.md
+
+Source-Repository head
+    type:       git
+    location:   https://github.com/killmous/MHMC
+
+executable MHMC
+    Default-Language:   Haskell2010
+    Hs-Source-Dirs:     src
+
+    main-is:            Main.hs
+
+    Build-Depends:
+        base >= 4
+      , libmpd >= 0.9.0
