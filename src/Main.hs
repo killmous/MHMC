@@ -1,5 +1,10 @@
 module Main where
 
+import System.Environment
+import System.Exit
 import Network.MPD
 
-main = putStrLn "Hello World"
+import MHMC
+
+main :: IO ()
+main = mhmc
