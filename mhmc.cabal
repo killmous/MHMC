@@ -1,4 +1,4 @@
-Name:           MHMC
+Name:           mhmc
 Version:        0.0.1
 Synopsis:       Minimalist Haskell MPD Client
 Description:    Curses-based MPD client coded entirely in Haskell
@@ -23,7 +23,7 @@ Source-Repository head
     type:       git
     location:   https://github.com/killmous/MHMC
 
-executable MHMC
+executable mhmc
     Default-Language:   Haskell2010
     Hs-Source-Dirs:     src
 
