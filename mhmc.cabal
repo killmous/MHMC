@@ -1,7 +1,7 @@
 Name:           mhmc
 Version:        0.0.1
 Synopsis:       Minimalist Haskell MPD Client
-Description:    Curses-based MPD client coded entirely in Haskell
+Description:    VTY-based MPD client coded entirely in Haskell
 Category:       Sound
 
 License:        MIT
@@ -32,3 +32,4 @@ executable mhmc
     Build-Depends:
         base >= 4
       , libmpd >= 0.9.0
+      , vty >= 5.0.0
