@@ -44,7 +44,12 @@ mhmc = do
 
 display :: (Int, Int) -> Screen -> Picture
 display (width, height) Help =
-    let line0left = string (def `withForeColor` brightBlack) "Help"
-        line0right = string (def `withForeColor` blue) "Volume: 79%"
-    in addToTop (picForImage line0) $ translateX (width - imageWidth line0right) line0right
+    header width Help
 display vty _ = emptyPicture
+
+header :: Int -> Screen -> Picture
+header width screen =
+    let title = string (def `withForeColor` brightBlack) $ show screen
+        volume = string (def `withForeColor` blue) "Volume: 79%"
+    in addToTop (picForImage title) $ displayRight volume
+    where displayRight image = translateX (width - imageWidth image) image
