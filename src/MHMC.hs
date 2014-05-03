@@ -5,11 +5,14 @@ module MHMC
     mhmc
 ) where
 
+import MHMCEvent
+
 import Graphics.Vty
 import Graphics.Vty.Prelude
 
 import qualified Network.MPD as MPD
 
+import Control.Concurrent
 import Data.Default
 import Data.Either
 
@@ -40,34 +43,36 @@ instance Show Screen where
 mhmc :: IO ()
 mhmc = do
     vty <- mkVty def
-    eventLoop Help vty
+    currentEvent <- newEmptyMVar
+    forkIO $ eventLoop vty currentEvent
+    loop Help vty currentEvent
 
-eventLoop :: Screen -> Vty -> IO ()
-eventLoop screen vty = do
+loop :: Screen -> Vty -> MVar Event -> IO ()
+loop screen vty currentEvent = do
     status <- MPD.withMPD MPD.status
     (width, height) <- displayBounds $ outputIface vty
     update vty $ display (width, height) screen status
-    e <- nextEvent vty
+    e <- tryTakeMVar currentEvent
     case e of
-        EvKey (KChar 'q') _ -> shutdown vty
-        EvKey KLeft _ -> do
+        Just (EvKey (KChar 'q') _) -> shutdown vty
+        Just (EvKey KLeft _) -> do
             MPD.withMPD $ MPD.setVolume $ (getVolume status - 1)
-            eventLoop screen vty
-        EvKey KRight _ -> do
+            loop screen vty currentEvent
+        Just (EvKey KRight _) -> do
             MPD.withMPD $ MPD.setVolume $ (getVolume status + 1)
-            eventLoop screen vty
-        otherwise -> eventLoop screen vty
+            loop screen vty currentEvent
+        otherwise -> loop screen vty currentEvent
 
 display :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> Picture
 display (width, height) screen status =
     header width screen status
-display _ _ _ = emptyPicture
 
 header :: Int -> Screen -> MPD.Response MPD.Status -> Picture
 header width screen status =
     let title = string (def `withForeColor` brightBlack) $ show screen
         volume = string (def `withForeColor` blue) ("Volume: " ++ (show $ getVolume status) ++ "%")
-    in addToTop (picForImage title) $ displayRight volume
+        bar = string (def `withForeColor` brightBlack) $ take width $ repeat '―'
+    in addToTop (picForImage title) $ displayRight volume <-> bar
     where displayRight image = translateX (width - imageWidth image) image
 
 getVolume :: MPD.Response MPD.Status -> Int
