@@ -56,10 +56,10 @@ loop screen vty currentEvent = do
     case e of
         Just (EvKey (KChar 'q') _) -> shutdown vty
         Just (EvKey KLeft _) -> do
-            MPD.withMPD $ MPD.setVolume $ (getVolume status - 1)
+            MPD.withMPD $ MPD.setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)
             loop screen vty currentEvent
         Just (EvKey KRight _) -> do
-            MPD.withMPD $ MPD.setVolume $ (getVolume status + 1)
+            MPD.withMPD $ MPD.setVolume $ if (getVolume status + 1) > 100 then 100 else (getVolume status + 1)
             loop screen vty currentEvent
         otherwise -> loop screen vty currentEvent
 
