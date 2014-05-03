@@ -1,7 +1,7 @@
 module MHMC.Display
 (
-	Screen(..),
-	display
+    Screen(..),
+    display
 ) where
 
 import MHMC.MPD
@@ -36,12 +36,22 @@ instance Show Screen where
 
 display :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> Picture
 display (width, height) screen status =
-    header width screen status
+    let img = header width screen status <->
+            contents (width, height) screen status <->
+            footer width screen status
+    in picForImage img
 
-header :: Int -> Screen -> MPD.Response MPD.Status -> Picture
+header :: Int -> Screen -> MPD.Response MPD.Status -> Image
 header width screen status =
     let title = string (def `withForeColor` brightBlack) $ show screen
         volume = string (def `withForeColor` blue) ("Volume: " ++ (show $ getVolume status) ++ "%")
         bar = string (def `withForeColor` brightBlack) $ take width $ repeat '―'
-    in addToTop (picForImage title) $ displayRight volume <-> bar
+    in title <|> (translateX (0 - imageWidth title) $ displayRight volume) <-> bar
     where displayRight image = translateX (width - imageWidth image) image
+
+contents :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> Image
+contents (width, height) Help status = cropBottom (height - 4) $ pad 0 0 0 height $ string (def `withForeColor` brightBlack) "HELP SCREEN!"
+contents (width, height) _ _ = cropBottom (height - 4) $ pad 0 0 0 height emptyImage
+
+footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
+footer width screen status = string (def `withForeColor` yellow) $ take width $ repeat '―'
