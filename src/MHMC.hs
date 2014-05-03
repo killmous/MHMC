@@ -13,6 +13,7 @@ import Graphics.Vty.Prelude
 import qualified Network.MPD as MPD
 
 import Control.Concurrent
+import Data.Char
 import Data.Default
 import Data.Either
 
@@ -26,6 +27,7 @@ data Screen = Help
             | Outputs
             | Visualizer
             | Clock
+            deriving (Enum)
 
 instance Show Screen where
     show Help = "Help"
@@ -54,6 +56,16 @@ loop screen vty currentEvent = do
     update vty $ display (width, height) screen status
     e <- tryTakeMVar currentEvent
     case e of
+        Just (EvKey (KChar '1') []) -> loop Help vty currentEvent
+        Just (EvKey (KChar '2') []) -> loop Playlist vty currentEvent
+        Just (EvKey (KChar '3') []) -> loop Browse vty currentEvent
+        Just (EvKey (KChar '4') []) -> loop Search vty currentEvent
+        Just (EvKey (KChar '5') []) -> loop Library vty currentEvent
+        Just (EvKey (KChar '6') []) -> loop PlaylistEditor vty currentEvent
+        Just (EvKey (KChar '7') []) -> loop MusicDir vty currentEvent
+        Just (EvKey (KChar '8') []) -> loop Outputs vty currentEvent
+        Just (EvKey (KChar '9') []) -> loop Visualizer vty currentEvent
+        Just (EvKey (KChar '0') []) -> loop Clock vty currentEvent
         Just (EvKey (KChar 'q') _) -> shutdown vty
         Just (EvKey KLeft _) -> do
             MPD.withMPD $ MPD.setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)
