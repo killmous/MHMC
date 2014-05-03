@@ -1,4 +1,4 @@
-module MHMCEvent
+module MHMC.Event
 (
 	eventLoop
 ) where
