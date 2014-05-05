@@ -17,4 +17,4 @@ togglePlaying :: (MPD.MonadMPD m) => MPD.Response MPD.Status -> m ()
 togglePlaying status = do
 	if getState status == "Playing"
 		then MPD.pause True
-		else MPD.play (Just 1)
+		else MPD.play Nothing

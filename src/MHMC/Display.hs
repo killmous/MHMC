@@ -39,8 +39,9 @@ instance Show Screen where
     show Visualizer = "Music Visualizer"
     show Clock = "Clock"
 
-display :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> IO Picture
-display (width, height) screen status = do
+display :: (Int, Int) -> Screen -> IO Picture
+display (width, height) screen = do
+    status <- MPD.withMPD MPD.status
     displayContents <- contents (width, height) screen status
     let img = header width screen status <->
             displayContents <->
@@ -49,9 +50,9 @@ display (width, height) screen status = do
 
 header :: Int -> Screen -> MPD.Response MPD.Status -> Image
 header width screen status =
-    let title = string (def `withForeColor` brightBlack) $ show screen
+    let title = string (def `withForeColor` white) $ show screen
         volume = string (def `withForeColor` blue) ("Volume: " ++ (show $ getVolume status) ++ "%")
-        bar = string (def `withForeColor` brightBlack) $ take width $ repeat '―'
+        bar = string (def `withForeColor` white) $ take width $ repeat '―'
     in title <|> (translateX (0 - imageWidth title) $ displayRight volume) <-> bar
     where displayRight image = translateX (width - imageWidth image) image
 
@@ -59,7 +60,7 @@ contents :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> IO Image
 contents (width, height) Help status = return $ cropBottom (height - 4)
     $ pad 0 0 0 height
     $ foldl1 (<->)
-    $ map (string (def `withForeColor` brightBlack))
+    $ map (string (def `withForeColor` white))
     $ lines helpinfo
     where helpinfo = [s|
 
@@ -81,6 +82,12 @@ contents (width, height) Help status = return $ cropBottom (height - 4)
 
         @           : MPD server info
 
+    Keys - Global
+--------------------------------
+        s           : Stop
+        P           : Pause/Play
+        Backspace   : Play current track from the beginning
+
 |]
 contents (width, height) Clock _ = do
     time <- getClockTime >>= toCalendarTime
@@ -91,6 +98,6 @@ contents (width, height) Clock _ = do
 contents (width, height) _ _ =  return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
 footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
-footer width screen status = string (def `withForeColor` yellow) firstRow <-> string (def `withForeColor` brightBlack) secondRow
+footer width screen status = string (def `withForeColor` yellow) firstRow <-> string (def `withForeColor` white) secondRow
     where firstRow = take width $ repeat '―'
           secondRow = ("[" ++ getState status ++ "]")
