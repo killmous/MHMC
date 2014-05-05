@@ -85,8 +85,12 @@ contents (width, height) Help status = return $ cropBottom (height - 4)
 contents (width, height) Clock _ = do
     time <- getClockTime >>= toCalendarTime
     let img = clock time
-    return $ cropBottom (height - 4) $ pad 0 0 0 height $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img
+    return $ cropBottom (height - 4)
+        $ pad 0 0 0 height
+        $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img
 contents (width, height) _ _ =  return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
 footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
-footer width screen status = string (def `withForeColor` yellow) $ take width $ repeat '―'
+footer width screen status = string (def `withForeColor` yellow) firstRow <-> string (def `withForeColor` brightBlack) secondRow
+    where firstRow = take width $ repeat '―'
+          secondRow = ("[" ++ getState status ++ "]")
