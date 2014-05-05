@@ -6,11 +6,14 @@ module MHMC.Display
 ) where
 
 import MHMC.MPD
+import MHMC.Clock
 import qualified Network.MPD as MPD
 import Graphics.Vty
 
 import Data.Default
 import Data.String.QQ
+
+import System.Time
 
 data Screen = Help
             | Playlist
@@ -36,12 +39,13 @@ instance Show Screen where
     show Visualizer = "Music Visualizer"
     show Clock = "Clock"
 
-display :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> Picture
-display (width, height) screen status =
+display :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> IO Picture
+display (width, height) screen status = do
+    displayContents <- contents (width, height) screen status
     let img = header width screen status <->
-            contents (width, height) screen status <->
+            displayContents <->
             footer width screen status
-    in picForImage img
+    return $ picForImage img
 
 header :: Int -> Screen -> MPD.Response MPD.Status -> Image
 header width screen status =
@@ -51,8 +55,8 @@ header width screen status =
     in title <|> (translateX (0 - imageWidth title) $ displayRight volume) <-> bar
     where displayRight image = translateX (width - imageWidth image) image
 
-contents :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> Image
-contents (width, height) Help status = cropBottom (height - 4)
+contents :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> IO Image
+contents (width, height) Help status = return $ cropBottom (height - 4)
     $ pad 0 0 0 height
     $ foldl1 (<->)
     $ map (string (def `withForeColor` brightBlack))
@@ -76,8 +80,13 @@ contents (width, height) Help status = cropBottom (height - 4)
         0           : Clock screen
 
         @           : MPD server info
+
 |]
-contents (width, height) _ _ = cropBottom (height - 4) $ pad 0 0 0 height emptyImage
+contents (width, height) Clock _ = do
+    time <- getClockTime >>= toCalendarTime
+    let img = clock time
+    return $ cropBottom (height - 4) $ pad 0 0 0 height $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img
+contents (width, height) _ _ =  return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
 footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
 footer width screen status = string (def `withForeColor` yellow) $ take width $ repeat '―'

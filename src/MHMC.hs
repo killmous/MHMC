@@ -31,7 +31,8 @@ loop :: Screen -> Vty -> MVar Event -> IO ()
 loop screen vty currentEvent = do
     status <- MPD.withMPD MPD.status
     (width, height) <- displayBounds $ outputIface vty
-    update vty $ display (width, height) screen status
+    pic <- display (width, height) screen status
+    update vty pic
     e <- tryTakeMVar currentEvent
     case e of
         Just (EvKey (KChar '1') []) -> loop Help vty currentEvent
