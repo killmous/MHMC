@@ -2,7 +2,8 @@ module MHMC.MPD
 (
 	getVolume,
 	getState,
-	togglePlaying
+	togglePlaying,
+	currentSongTime
 ) where
 
 import qualified Network.MPD as MPD
@@ -18,3 +19,6 @@ togglePlaying status = do
 	if getState status == "Playing"
 		then MPD.pause True
 		else MPD.play Nothing
+
+currentSongTime :: MPD.Response MPD.Status -> (Double, MPD.Seconds)
+currentSongTime = either (\_ -> (0,0)) MPD.stTime

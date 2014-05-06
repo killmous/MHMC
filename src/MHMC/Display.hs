@@ -12,6 +12,7 @@ import Graphics.Vty
 
 import Data.Default
 import Data.String.QQ
+import Text.Printf
 
 import System.Time
 
@@ -98,6 +99,16 @@ contents (width, height) Clock _ = do
 contents (width, height) _ _ =  return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
 footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
-footer width screen status = string (def `withForeColor` yellow) firstRow <-> string (def `withForeColor` white) secondRow
-    where firstRow = take width $ repeat '―'
-          secondRow = ("[" ++ getState status ++ "]")
+footer width screen status =
+    let (currentTime, totalTime) = currentSongTime status
+        secondRowLeft = "[" ++ getState status ++ "]"
+        secondRowRight = case (currentTime, totalTime) of
+            (0,0) -> ""
+            (a,b) -> "[" ++ (minutes $ fromEnum a) ++ "/" ++ minutes b ++ "]"
+        firstRow = take width $ repeat '―'
+        secondRow = string (def `withForeColor` white) secondRowLeft
+            <|> (translateX (0 - length secondRowLeft)
+            $ (displayRight $ string (def `withForeColor` white) secondRowRight))
+    in string (def `withForeColor` yellow) firstRow <-> secondRow
+    where displayRight image = translateX (width - imageWidth image) image
+          minutes time = (show $ div time 60) ++ ":" ++ (printf "%.2d" $ mod time 60)
