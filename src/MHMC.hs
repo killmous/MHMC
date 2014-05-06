@@ -45,9 +45,12 @@ loop screen vty currentEvent = do
         Just (EvKey (KChar '8') []) -> loop Outputs vty currentEvent
         Just (EvKey (KChar '9') []) -> loop Visualizer vty currentEvent
         Just (EvKey (KChar '0') []) -> loop Clock vty currentEvent
-        Just (EvKey (KChar 'q') _) -> shutdown vty
+        Just (EvKey (KChar 'q') []) -> shutdown vty
         Just (EvKey (KChar 'P') []) -> do
             MPD.withMPD $ togglePlaying status
+            loop screen vty currentEvent
+        Just (EvKey (KChar 's') []) -> do
+            MPD.withMPD $ MPD.stop
             loop screen vty currentEvent
         Just (EvKey KLeft _) -> do
             MPD.withMPD $ MPD.setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)
