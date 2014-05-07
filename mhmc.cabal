@@ -33,6 +33,7 @@ executable mhmc
     ghc-prof-options:   -O2 -threaded
     Build-Depends:
         base >= 4
+      , containers >= 0.5.0.0
       , data-default >= 0.5.3
       , string-qq >= 0.0.2
       , old-time >= 1.1.0.1

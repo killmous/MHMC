@@ -12,6 +12,7 @@ import qualified Network.MPD as MPD
 import Graphics.Vty hiding (Cursor(..))
 
 import Data.Default
+import Data.Maybe
 import Data.String.QQ
 import Text.Printf
 
@@ -98,14 +99,21 @@ contents (width, height) Help status (Cursor cursor) =
         Backspace   : Play current track from the beginning
 
 |]
+contents (width, height) Playlist status (Cursor cursor) = do
+    hash <- getPlaylist
+    let artists = map (lookup MPD.Artist) hash
+        artistsString = map (MPD.toString . (!! 0) . fromMaybe []) artists
+        artistsImg = foldl1 (<->) $ map (string (def `withForeColor` green)) str
+            where str = if null artistsString then ["Empty Playlist"] else artistsString
+    return (cropBottom (height - 4) $ pad 0 0 0 height artistsImg, Cursor 0)
 contents (width, height) Clock _ _ = do
     time <- getClockTime >>= toCalendarTime
     let img = clock time
     return (cropBottom (height - 4)
         $ pad 0 0 0 height
-        $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img,
-        Cursor 0)
-contents (width, height) _ _ _ =  return (cropBottom (height - 4) $ pad 0 0 0 height emptyImage, Cursor 0)
+        $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img
+        , Cursor 0)
+contents (width, height) _ _ _ = return (cropBottom (height - 4) $ pad 0 0 0 height emptyImage, Cursor 0)
 
 footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
 footer width screen status =
