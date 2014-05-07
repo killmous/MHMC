@@ -105,7 +105,11 @@ contents (width, height) Playlist status (Cursor cursor) = do
         artistsString = map (MPD.toString . (!! 0) . fromMaybe []) artists
         artistsImg = foldl1 (<->) $ map (string (def `withForeColor` green)) str
             where str = if null artistsString then ["Empty Playlist"] else artistsString
-    return (cropBottom (height - 4) $ pad 0 0 0 height artistsImg, Cursor 0)
+        titles = map (lookup MPD.Title) hash
+        titlesString = map (MPD.toString . (!! 0) . fromMaybe []) titles
+        titlesImg = foldl1 (<->) $ map (string (def `withForeColor` blue)) str
+            where str = if null titlesString then ["Empty Playlist"] else titlesString
+    return (cropBottom (height - 4) $ pad 0 0 0 height (artistsImg <|> titlesImg), Cursor 0)
 contents (width, height) Clock _ _ = do
     time <- getClockTime >>= toCalendarTime
     let img = clock time
