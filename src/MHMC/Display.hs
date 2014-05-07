@@ -2,13 +2,14 @@
 module MHMC.Display
 (
     Screen(..),
+    Cursor(..),
     display
 ) where
 
 import MHMC.MPD
 import MHMC.Clock
 import qualified Network.MPD as MPD
-import Graphics.Vty
+import Graphics.Vty hiding (Cursor(..))
 
 import Data.Default
 import Data.String.QQ
@@ -40,14 +41,16 @@ instance Show Screen where
     show Visualizer = "Music Visualizer"
     show Clock = "Clock"
 
-display :: (Int, Int) -> Screen -> IO Picture
-display (width, height) screen = do
+data Cursor = Cursor {val :: Int}
+
+display :: (Int, Int) -> Screen -> Cursor -> IO (Picture, Cursor)
+display (width, height) screen cursor = do
     status <- MPD.withMPD MPD.status
-    displayContents <- contents (width, height) screen status
+    (displayContents, realcursor) <- contents (width, height) screen status cursor
     let img = header width screen status <->
             displayContents <->
             footer width screen status
-    return $ picForImage img
+    return (picForImage img, realcursor)
 
 header :: Int -> Screen -> MPD.Response MPD.Status -> Image
 header width screen status =
@@ -57,12 +60,17 @@ header width screen status =
     in title <|> (translateX (0 - imageWidth title) $ displayRight volume) <-> bar
     where displayRight image = translateX (width - imageWidth image) image
 
-contents :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> IO Image
-contents (width, height) Help status = return $ cropBottom (height - 4)
-    $ pad 0 0 0 height
-    $ foldl1 (<->)
-    $ map (string (def `withForeColor` white))
-    $ lines helpinfo
+contents :: (Int, Int) -> Screen -> MPD.Response MPD.Status -> Cursor -> IO (Image, Cursor)
+contents (width, height) Help status (Cursor cursor) =
+    let maxcursor = (length $ lines helpinfo) - (height - 4)
+        realcursor = if cursor > maxcursor then maxcursor else cursor
+    in return (cropBottom (height - 4)
+        $ pad 0 0 0 height
+        $ foldl1 (<->)
+        $ map (string (def `withForeColor` white))
+        $ drop realcursor
+        $ lines helpinfo,
+        Cursor realcursor)
     where helpinfo = [s|
 
     Keys - Movement
@@ -90,13 +98,14 @@ contents (width, height) Help status = return $ cropBottom (height - 4)
         Backspace   : Play current track from the beginning
 
 |]
-contents (width, height) Clock _ = do
+contents (width, height) Clock _ _ = do
     time <- getClockTime >>= toCalendarTime
     let img = clock time
-    return $ cropBottom (height - 4)
+    return (cropBottom (height - 4)
         $ pad 0 0 0 height
-        $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img
-contents (width, height) _ _ =  return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
+        $ translate ((width - imageWidth img - 2) `div` 2) ((height - imageHeight img - 2) `div` 2) img,
+        Cursor 0)
+contents (width, height) _ _ _ =  return (cropBottom (height - 4) $ pad 0 0 0 height emptyImage, Cursor 0)
 
 footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
 footer width screen status =
