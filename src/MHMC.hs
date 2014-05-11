@@ -25,7 +25,7 @@ mhmc = do
     vty <- mkVty def
     currentEvent <- newEmptyMVar
     forkIO $ eventLoop vty currentEvent
-    loop Help vty currentEvent (Cursor 0)
+    loop Playlist vty currentEvent (Cursor 0)
 
 loop :: Screen -> Vty -> MVar Event -> Cursor -> IO ()
 loop screen vty currentEvent cursor = do
@@ -35,33 +35,36 @@ loop screen vty currentEvent cursor = do
     update vty pic
     e <- tryTakeMVar currentEvent
     case e of
-        Just (EvKey (KChar '1') []) -> loop Help vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '2') []) -> loop Playlist vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '3') []) -> loop Browse vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '4') []) -> loop Search vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '5') []) -> loop Library vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '6') []) -> loop PlaylistEditor vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '7') []) -> loop MusicDir vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '8') []) -> loop Outputs vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '9') []) -> loop Visualizer vty currentEvent (Cursor 0)
-        Just (EvKey (KChar '0') []) -> loop Clock vty currentEvent (Cursor 0)
-        Just (EvKey (KChar 'q') []) -> shutdown vty
-        Just (EvKey (KChar 'P') []) -> do
+        Just (EvKey (KChar '1') [])     -> loop Help vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '2') [])     -> loop Playlist vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '3') [])     -> loop Browse vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '4') [])     -> loop Search vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '5') [])     -> loop Library vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '6') [])     -> loop PlaylistEditor vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '7') [])     -> loop MusicDir vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '8') [])     -> loop Outputs vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '9') [])     -> loop Visualizer vty currentEvent (Cursor 0)
+        Just (EvKey (KChar '0') [])     -> loop Clock vty currentEvent (Cursor 0)
+        Just (EvKey (KChar 'q') [])     -> shutdown vty
+        Just (EvKey (KChar 'P') [])     -> do
             MPD.withMPD $ togglePlaying status
             loop screen vty currentEvent newcursor
-        Just (EvKey (KChar 's') []) -> do
+        Just (EvKey (KChar 's') [])     -> do
             MPD.withMPD $ MPD.stop
             loop screen vty currentEvent newcursor
-        Just (EvKey KLeft []) -> do
+        Just (EvKey KBS [])             -> do
+            MPD.withMPD $ MPD.play $ Just 0
+            loop screen vty currentEvent newcursor
+        Just (EvKey KLeft [])           -> do
             MPD.withMPD $ MPD.setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)
             loop screen vty currentEvent newcursor
-        Just (EvKey KRight []) -> do
+        Just (EvKey KRight [])          -> do
             MPD.withMPD $ MPD.setVolume $ if (getVolume status + 1) > 100 then 100 else (getVolume status + 1)
             loop screen vty currentEvent newcursor
-        Just (EvKey KDown []) -> case screen of
+        Just (EvKey KDown [])           -> case screen of
             Help      -> loop screen vty currentEvent (Cursor (val newcursor + 1))
             otherwise -> loop screen vty currentEvent (Cursor 0)
-        Just (EvKey KUp []) -> case screen of
+        Just (EvKey KUp [])             -> case screen of
             Help      -> loop screen vty currentEvent (Cursor (if val newcursor == 0 then 0 else val newcursor - 1))
             otherwise -> loop screen vty currentEvent (Cursor 0)
-        otherwise -> loop screen vty currentEvent newcursor
+        otherwise                       -> loop screen vty currentEvent newcursor

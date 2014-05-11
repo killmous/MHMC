@@ -103,13 +103,18 @@ contents (width, height) Playlist status (Cursor cursor) = do
     hash <- getPlaylist
     let artists = map (lookup MPD.Artist) hash
         artistsString = map (MPD.toString . (!! 0) . fromMaybe []) artists
-        artistsImg = foldl1 (<->) $ map (string (def `withForeColor` green)) str
+        artistsImg = foldl1 (<->) $ map (string (def `withForeColor` red)) str
             where str = if null artistsString then ["Empty Playlist"] else artistsString
         titles = map (lookup MPD.Title) hash
         titlesString = map (MPD.toString . (!! 0) . fromMaybe []) titles
         titlesImg = foldl1 (<->) $ map (string (def `withForeColor` blue)) str
             where str = if null titlesString then ["Empty Playlist"] else titlesString
-    return (cropBottom (height - 4) $ pad 0 0 0 height (artistsImg <|> titlesImg), Cursor 0)
+        albums = map (lookup MPD.Album) hash
+        albumsString = map (MPD.toString . (!! 0) . fromMaybe []) albums
+        albumsImg = foldl1 (<->) $ map (string (def `withForeColor` green)) str
+            where str = if null albumsString then ["Empty Playlist"] else albumsString
+    return (cropBottom (height - 4) $ pad 0 0 0 height ((sizeof 0.25 artistsImg) <|> (sizeof 0.5 titlesImg) <|> (sizeof 0.25 albumsImg)), Cursor 0)
+    where sizeof frac image = cropRight (fromEnum (fromIntegral width * frac)) $ pad 0 0 (fromEnum (fromIntegral width * frac)) 0 image
 contents (width, height) Clock _ _ = do
     time <- getClockTime >>= toCalendarTime
     let img = clock time
