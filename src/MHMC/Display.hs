@@ -101,7 +101,9 @@ contents (width, height) Help status (Cursor cursor) =
 |]
 contents (width, height) Playlist status (Cursor cursor) = do
     hash <- getPlaylist
-    let artists = map (lookup MPD.Artist) hash
+    let cursorString = (take cursor $ repeat "") ++ ["->"]
+        cursorImg = foldl1 (<->) $ map (string (def `withForeColor` blue)) cursorString
+        artists = map (lookup MPD.Artist) hash
         artistsString = map (MPD.toString . (!! 0) . fromMaybe []) artists
         artistsImg = foldl1 (<->) $ map (string (def `withForeColor` red)) str
             where str = if null artistsString then ["Empty Playlist"] else artistsString
@@ -113,7 +115,10 @@ contents (width, height) Playlist status (Cursor cursor) = do
         albumsString = map (MPD.toString . (!! 0) . fromMaybe []) albums
         albumsImg = foldl1 (<->) $ map (string (def `withForeColor` green)) str
             where str = if null albumsString then ["Empty Playlist"] else albumsString
-    return (cropBottom (height - 4) $ pad 0 0 0 height ((sizeof 0.25 artistsImg) <|> (sizeof 0.5 titlesImg) <|> (sizeof 0.25 albumsImg)), Cursor 0)
+
+    let maxcursor = getPlaylistLength status - 1
+        realcursor = if cursor > maxcursor then maxcursor else cursor
+    return (cropBottom (height - 4) $ pad 0 0 0 height (cursorImg <|> (sizeof 0.25 artistsImg) <|> (sizeof 0.5 titlesImg) <|> (sizeof 0.25 albumsImg)), Cursor realcursor)
     where sizeof frac image = cropRight (fromEnum (fromIntegral width * frac)) $ pad 0 0 (fromEnum (fromIntegral width * frac)) 0 image
 contents (width, height) Clock _ _ = do
     time <- getClockTime >>= toCalendarTime
@@ -138,3 +143,7 @@ footer width screen status =
     in string (def `withForeColor` yellow) firstRow <-> secondRow
     where displayRight image = translateX (width - imageWidth image) image
           minutes time = (show $ div time 60) ++ ":" ++ (printf "%.2d" $ mod time 60)
+
+reverseColors :: Attr -> Attr
+reverseColors attr = attr { attrBackColor = attrForeColor attr,
+                            attrForeColor = attrBackColor attr}

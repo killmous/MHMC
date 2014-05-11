@@ -4,7 +4,8 @@ module MHMC.MPD
 	getState,
 	togglePlaying,
 	currentSongTime,
-	getPlaylist
+	getPlaylist,
+	getPlaylistLength
 ) where
 
 import Network.MPD
@@ -27,3 +28,6 @@ currentSongTime = either (\_ -> (0,0)) stTime
 
 getPlaylist :: IO [[(Metadata, [Value])]]
 getPlaylist = (withMPD $ playlistInfo Nothing) >>= either (\_ -> return []) (return . map sgTags) >>= return . map toList
+
+getPlaylistLength :: Response Status -> Int
+getPlaylistLength = either (\_ -> 0) (fromInteger . stPlaylistLength)
