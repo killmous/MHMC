@@ -71,4 +71,9 @@ loop screen vty currentEvent cursor = do
             Help      -> loop screen vty currentEvent (Cursor (if val newcursor == 0 then 0 else val newcursor - 1))
             Playlist  -> loop screen vty currentEvent (Cursor (if val newcursor == 0 then 0 else val newcursor - 1))
             otherwise -> loop screen vty currentEvent (Cursor 0)
+        Just (EvKey KEnter [])     -> case screen of
+            Playlist  -> do
+                MPD.withMPD $ MPD.play (Just $ val cursor)
+                loop screen vty currentEvent newcursor
+            otherwise -> loop screen vty currentEvent newcursor
         otherwise                       -> loop screen vty currentEvent newcursor
