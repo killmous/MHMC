@@ -5,7 +5,8 @@ module MHMC.MPD
 	togglePlaying,
 	currentSongTime,
 	getPlaylist,
-	getPlaylistLength
+	getPlaylistLength,
+	--getDirectory
 ) where
 
 import Network.MPD
@@ -31,3 +32,7 @@ getPlaylist = (withMPD $ playlistInfo Nothing) >>= either (\_ -> return []) (ret
 
 getPlaylistLength :: Response Status -> Int
 getPlaylistLength = either (\_ -> 0) (fromInteger . stPlaylistLength)
+
+{-getDirectory :: Maybe String -> IO [Path]
+getDirectory Nothing = (withMPD $ listAll (Path "")) >>= either (\_ -> return []) return
+getDirectory (Just path) = (withMPD $ listAll (Path path)) >>= either (\_ -> return []) return-}

@@ -12,6 +12,7 @@ import qualified Network.MPD as MPD
 import Graphics.Vty hiding (Cursor(..))
 
 import Data.Default
+import Data.Map (toList)
 import Data.Maybe
 import Data.String.QQ
 import Text.Printf
@@ -48,9 +49,10 @@ display :: (Int, Int) -> Screen -> Cursor -> IO (Picture, Cursor)
 display (width, height) screen cursor = do
     status <- MPD.withMPD MPD.status
     (displayContents, realcursor) <- contents (width, height) screen status cursor
+    song <- (MPD.withMPD MPD.currentSong) >>= either (\_ -> return Nothing) return
     let img = header width screen status <->
             displayContents <->
-            footer width screen status
+            footer width screen status song
     return (picForImage img, realcursor)
 
 header :: Int -> Screen -> MPD.Response MPD.Status -> Image
@@ -102,7 +104,7 @@ contents (width, height) Help status (Cursor cursor) =
 contents (width, height) Playlist status (Cursor cursor) = do
     hash <- getPlaylist
     let cursorString = (take cursor $ repeat "") ++ ["->"]
-        cursorImg = foldl1 (<->) $ map (string (def `withForeColor` blue)) cursorString
+        cursorImg = foldl1 (<->) $ map (string (def `withForeColor` white)) cursorString
         artists = map (lookup MPD.Artist) hash
         artistsString = map (MPD.toString . (!! 0) . fromMaybe []) artists
         artistsImg = foldl1 (<->) $ map (string (def `withForeColor` red)) str
@@ -118,7 +120,14 @@ contents (width, height) Playlist status (Cursor cursor) = do
 
     let maxcursor = getPlaylistLength status - 1
         realcursor = if cursor > maxcursor then maxcursor else cursor
-    return (cropBottom (height - 4) $ pad 0 0 0 height (cursorImg <|> (sizeof 0.25 artistsImg) <|> (sizeof 0.5 titlesImg) <|> (sizeof 0.25 albumsImg)), Cursor realcursor)
+    return (cropBottom (height - 4)
+        $ pad 0 0 0 height (cursorImg
+            <|> (sizeof 0.25 artistsImg)
+            <|> (string def " ")
+            <|> (sizeof 0.5 titlesImg)
+            <|> (string def " ")
+            <|> (sizeof 0.25 albumsImg))
+        , Cursor realcursor)
     where sizeof frac image = cropRight (fromEnum (fromIntegral width * frac)) $ pad 0 0 (fromEnum (fromIntegral width * frac)) 0 image
 contents (width, height) Clock _ _ = do
     time <- getClockTime >>= toCalendarTime
@@ -129,20 +138,29 @@ contents (width, height) Clock _ _ = do
         , Cursor 0)
 contents (width, height) _ _ _ = return (cropBottom (height - 4) $ pad 0 0 0 height emptyImage, Cursor 0)
 
-footer :: Int -> Screen -> MPD.Response MPD.Status -> Image
-footer width screen status =
+footer :: Int -> Screen -> MPD.Response MPD.Status -> Maybe MPD.Song -> Image
+footer width screen status song =
     let (currentTime, totalTime) = currentSongTime status
         secondRowLeft = "[" ++ getState status ++ "]"
+        secondRowMid = case song of
+            Just name -> (string (def `withForeColor` red) $ MPD.toString $ (!! 0) $ fromMaybe [] $ lookup MPD.Artist songTags)
+                <|> (string (def `withForeColor` white) " - ")
+                <|> (string (def `withForeColor` blue) $ MPD.toString $ (!! 0) $ fromMaybe [] $ lookup MPD.Title songTags)
+                <|> (string (def `withForeColor` white) " - ")
+                <|> (string (def `withForeColor` green) $ MPD.toString $ (!! 0) $ fromMaybe [] $ lookup MPD.Album songTags)
+                where songTags = toList $ MPD.sgTags name
+            Nothing   -> emptyImage
         secondRowRight = case (currentTime, totalTime) of
             (0,0) -> ""
             (a,b) -> "[" ++ (minutes $ fromEnum a) ++ "/" ++ minutes b ++ "]"
         firstRow = take width $ repeat '―'
         secondRow = string (def `withForeColor` white) secondRowLeft
-            <|> (translateX (0 - length secondRowLeft)
-            $ (displayRight $ string (def `withForeColor` white) secondRowRight))
+            <|> (cropRight (width - length secondRowRight - length secondRowLeft)
+                $ pad 0 0 width 0
+                $ secondRowMid)
+            <|> string (def `withForeColor` white) secondRowRight
     in string (def `withForeColor` yellow) firstRow <-> secondRow
-    where displayRight image = translateX (width - imageWidth image) image
-          minutes time = (show $ div time 60) ++ ":" ++ (printf "%.2d" $ mod time 60)
+    where minutes time = (show $ div time 60) ++ ":" ++ (printf "%.2d" $ mod time 60)
 
 reverseColors :: Attr -> Attr
 reverseColors attr = attr { attrBackColor = attrForeColor attr,
