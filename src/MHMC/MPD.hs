@@ -11,9 +11,10 @@ module MHMC.MPD
 
 import Network.MPD
 import Data.Map hiding (map)
+import Data.Maybe
 
 getVolume :: Response Status -> Int
-getVolume = either (\_ -> -1) stVolume
+getVolume = either (\_ -> -1) (fromMaybe (-1) . stVolume)
 
 getState :: Response Status -> String
 getState = either (\_ -> "Error") (show . stState)
@@ -25,7 +26,7 @@ togglePlaying status = do
 		else play Nothing
 
 currentSongTime :: Response Status -> (Double, Seconds)
-currentSongTime = either (\_ -> (0,0)) stTime
+currentSongTime = either (\_ -> (0,0)) (fromMaybe (0,0) . stTime)
 
 getPlaylist :: IO [[(Metadata, [Value])]]
 getPlaylist = (withMPD $ playlistInfo Nothing) >>= either (\_ -> return []) (return . map sgTags) >>= return . map toList
