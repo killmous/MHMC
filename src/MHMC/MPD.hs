@@ -1,12 +1,13 @@
 module MHMC.MPD
 (
-	getVolume,
-	getState,
-	togglePlaying,
-	currentSongTime,
-	getPlaylist,
-	getPlaylistLength,
-	--getDirectory
+    getVolume,
+    getState,
+    togglePlaying,
+    nowPlaying,
+    currentSongTime,
+    getPlaylist,
+    getPlaylistLength,
+    --getDirectory
 ) where
 
 import Network.MPD
@@ -21,9 +22,12 @@ getState = either (\_ -> "Error") (show . stState)
 
 togglePlaying :: (MonadMPD m) => Response Status -> m ()
 togglePlaying status = do
-	if getState status == "Playing"
-		then pause True
-		else play Nothing
+    if getState status == "Playing"
+        then pause True
+        else play Nothing
+
+nowPlaying :: IO (Maybe Song)
+nowPlaying = (withMPD currentSong) >>= either (\_ -> return Nothing) return
 
 currentSongTime :: Response Status -> (Double, Seconds)
 currentSongTime = either (\_ -> (0,0)) (fromMaybe (0,0) . stTime)

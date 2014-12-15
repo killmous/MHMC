@@ -1,13 +1,25 @@
 module MHMC.RWS
 (
-    MHMC,
-    MHMCReader(..)
+    Screen(..),
+    MHMCReader(..),
+    MHMC
 ) where
 
 import Control.Concurrent
 import Control.Monad.Trans.RWS.Lazy
 import Graphics.Vty
-import MHMC.Display
+
+data Screen = Help
+            | Playlist
+            | Browse
+            | Search
+            | Library
+            | PlaylistEditor
+            | MusicDir
+            | Outputs
+            | Visualizer
+            | Clock
+            deriving (Eq, Enum)
 
 data MHMCReader = MHMCReader {
     getVty :: Vty,

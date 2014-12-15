@@ -38,6 +38,9 @@ loop = do
     status <- liftIO $ MPD.withMPD MPD.status
     e <- asks getEvent >>= liftIO . tryTakeMVar
     vty <- asks getVty
+    (width, height) <- liftIO $ displayBounds $ outputIface vty
+    pic <- display (width, height)
+    liftIO $ update vty pic
     case e of
         Just (EvKey (KChar 'q') []) -> liftIO $ shutdown vty
         otherwise                   -> loop
