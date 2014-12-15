@@ -44,7 +44,7 @@ display (width, height) = do
     screen <- get
     let img = header width screen status <->
             displayContents <->
-            footer width screen status song
+            footer width status song
     return $ picForImage img
 
 header :: Int -> Screen -> MPD.Response MPD.Status -> Image
@@ -56,10 +56,45 @@ header width screen status =
     where displayRight image = translateX (width - imageWidth image) image
 
 contents :: (Int, Int) -> MPD.Response MPD.Status -> MHMC Image
-contents (width, height) _ = return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
+contents (width, height) _ = do
+    screen <- get
+    case screen of
+        Help        -> return $ cropBottom (height - 4)
+            $ pad 0 0 0 height
+            $ foldl1 (<->)
+            $ map (string (def `withForeColor` white))
+            $ lines helpinfo
+        otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
+    where helpinfo = [s|
 
-footer :: Int -> Screen -> MPD.Response MPD.Status -> Maybe MPD.Song -> Image
-footer width screen status song =
+    Keys - Movement
+--------------------------------
+        Up          : Move Cursor up
+        Down        : Move Cursor down
+
+        1           : Help screen
+        2           : Playlist screen
+        3           : Browse screen
+        4           : Search engine
+        5           : Media library
+        6           : Playlist editor
+        7           : Tag editor
+        8           : Outputs
+        9           : Music visualizer
+        0           : Clock screen
+
+        @           : MPD server info
+
+    Keys - Global
+--------------------------------
+        s           : Stop
+        P           : Pause/Play
+        Backspace   : Play current track from the beginning
+
+|]
+
+footer :: Int -> MPD.Response MPD.Status -> Maybe MPD.Song -> Image
+footer width status song =
     let (currentTime, totalTime) = currentSongTime status
         secondRowLeft = "[" ++ getState status ++ "]"
         secondRowMid = case song of

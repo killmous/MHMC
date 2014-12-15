@@ -31,7 +31,7 @@ mhmc = do
     currentEvent <- newEmptyMVar
     forkIO $ eventLoop vty currentEvent
     let state = MHMCReader vty currentEvent
-    (\_ -> ()) <$> execRWST loop state Playlist
+    execRWST loop state Playlist >> return ()
 
 loop :: MHMC ()
 loop = do
