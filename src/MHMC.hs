@@ -42,5 +42,15 @@ loop = do
     pic <- display (width, height)
     liftIO $ update vty pic
     case e of
+        Just (EvKey (KChar '1') []) -> put Help >> loop
+        Just (EvKey (KChar '2') []) -> put Playlist >> loop
+        Just (EvKey (KChar '3') []) -> put Browse >> loop
+        Just (EvKey (KChar '4') []) -> put Search >> loop
+        Just (EvKey (KChar '5') []) -> put Library >> loop
+        Just (EvKey (KChar '6') []) -> put PlaylistEditor >> loop
+        Just (EvKey (KChar '7') []) -> put MusicDir >> loop
+        Just (EvKey (KChar '8') []) -> put Outputs >> loop
+        Just (EvKey (KChar '9') []) -> put Visualizer >> loop
+        Just (EvKey (KChar '0') []) -> put Clock >> loop
         Just (EvKey (KChar 'q') []) -> liftIO $ shutdown vty
         otherwise                   -> loop
