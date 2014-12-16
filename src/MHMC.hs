@@ -39,6 +39,7 @@ loop = do
     vty <- asks getVty
     (width, height) <- liftIO $ displayBounds $ outputIface vty
     pic <- display (width, height)
+    screen <- gets getScreen
     liftIO $ update vty pic
     case e of
         Just (EvKey (KChar '1') []) -> setScreen Help >> loop
@@ -52,4 +53,12 @@ loop = do
         Just (EvKey (KChar '9') []) -> setScreen Visualizer >> loop
         Just (EvKey (KChar '0') []) -> setScreen Clock >> loop
         Just (EvKey (KChar 'q') []) -> liftIO $ shutdown vty
+        Just (EvKey KDown [])       -> case screen of
+            Help      -> incCursor >> loop
+            Playlist  -> incCursor >> loop
+            otherwise -> loop
+        Just (EvKey KUp [])         -> case screen of
+            Help      -> decCursor >> loop
+            Playlist  -> decCursor >> loop
+            otherwise -> loop
         otherwise                   -> loop

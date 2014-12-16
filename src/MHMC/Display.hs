@@ -54,8 +54,9 @@ header width screen status =
 contents :: (Int, Int) -> MPD.Response MPD.Status -> MHMC Image
 contents (width, height) _ = do
     screen <- gets getScreen
+    cursor <- gets getCursor
     case screen of
-        Help        -> return $ help height
+        Help        -> return $ help height cursor
         Clock       -> liftIO $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 

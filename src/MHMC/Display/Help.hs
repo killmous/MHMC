@@ -9,12 +9,17 @@ import Graphics.Vty
 import Data.Default
 import Data.String.QQ
 
-help :: Int -> Image
-help height = cropBottom (height - 4)
+help :: Int -> Int -> Image
+help height cursor =
+    let maxcursor = (length $ lines helpinfo) - (height - 4)
+        realcursor = min maxcursor cursor
+    in cropBottom (height - 4)
     $ pad 0 0 0 height
     $ foldl1 (<->)
     $ map (string (def `withForeColor` white))
-    $ lines $ [s|
+    $ drop realcursor
+    $ lines helpinfo
+    where helpinfo = [s|
 
     Keys - Movement
 --------------------------------
