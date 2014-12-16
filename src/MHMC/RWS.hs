@@ -2,7 +2,9 @@ module MHMC.RWS
 (
     Screen(..),
     MHMCReader(..),
-    MHMC
+    MHMCState(..),
+    MHMC,
+    setScreen
 ) where
 
 import Control.Concurrent
@@ -26,4 +28,14 @@ data MHMCReader = MHMCReader {
     getEvent :: MVar Event
 }
 
-type MHMC = RWST MHMCReader () Screen IO
+data MHMCState = MHMCState {
+    getScreen :: Screen,
+    getCursor :: Int
+}
+
+setScreen :: Screen -> MHMC ()
+setScreen screen = do
+    cursor <- gets getCursor
+    put $ MHMCState screen cursor
+
+type MHMC = RWST MHMCReader () MHMCState IO

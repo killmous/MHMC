@@ -28,8 +28,9 @@ mhmc = do
     vty <- mkVty def
     currentEvent <- newEmptyMVar
     forkIO $ eventLoop vty currentEvent
-    let state = MHMCReader vty currentEvent
-    execRWST loop state Playlist >> return ()
+    let reader = MHMCReader vty currentEvent
+    let state = MHMCState Playlist 0
+    execRWST loop reader state >> return ()
 
 loop :: MHMC ()
 loop = do
@@ -40,15 +41,15 @@ loop = do
     pic <- display (width, height)
     liftIO $ update vty pic
     case e of
-        Just (EvKey (KChar '1') []) -> put Help >> loop
-        Just (EvKey (KChar '2') []) -> put Playlist >> loop
-        Just (EvKey (KChar '3') []) -> put Browse >> loop
-        Just (EvKey (KChar '4') []) -> put Search >> loop
-        Just (EvKey (KChar '5') []) -> put Library >> loop
-        Just (EvKey (KChar '6') []) -> put PlaylistEditor >> loop
-        Just (EvKey (KChar '7') []) -> put MusicDir >> loop
-        Just (EvKey (KChar '8') []) -> put Outputs >> loop
-        Just (EvKey (KChar '9') []) -> put Visualizer >> loop
-        Just (EvKey (KChar '0') []) -> put Clock >> loop
+        Just (EvKey (KChar '1') []) -> setScreen Help >> loop
+        Just (EvKey (KChar '2') []) -> setScreen Playlist >> loop
+        Just (EvKey (KChar '3') []) -> setScreen Browse >> loop
+        Just (EvKey (KChar '4') []) -> setScreen Search >> loop
+        Just (EvKey (KChar '5') []) -> setScreen Library >> loop
+        Just (EvKey (KChar '6') []) -> setScreen PlaylistEditor >> loop
+        Just (EvKey (KChar '7') []) -> setScreen MusicDir >> loop
+        Just (EvKey (KChar '8') []) -> setScreen Outputs >> loop
+        Just (EvKey (KChar '9') []) -> setScreen Visualizer >> loop
+        Just (EvKey (KChar '0') []) -> setScreen Clock >> loop
         Just (EvKey (KChar 'q') []) -> liftIO $ shutdown vty
         otherwise                   -> loop

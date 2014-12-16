@@ -1,7 +1,6 @@
 module MHMC.Display
 (
     Screen(..),
-    Cursor(..),
     display
 ) where
 
@@ -10,9 +9,8 @@ import MHMC.Display.Clock
 import MHMC.Display.Help
 import MHMC.RWS
 import qualified Network.MPD as MPD
-import Graphics.Vty hiding (Cursor(..))
+import Graphics.Vty
 
-import Control.Applicative ((<$>))
 import Control.Monad.IO.Class
 import Control.Monad.Trans.RWS.Lazy
 import Data.Default
@@ -34,14 +32,12 @@ instance Show Screen where
     show Visualizer = "Music Visualizer"
     show Clock = "Clock"
 
-data Cursor = Cursor {val :: Int}
-
 display :: (Int, Int) -> MHMC Picture
 display (width, height) = do
     status <- liftIO $ MPD.withMPD MPD.status
     displayContents <- contents (width, height) status
     song <- liftIO $ nowPlaying
-    screen <- get
+    screen <- gets getScreen
     let img = header width screen status <->
             displayContents <->
             footer width status song
@@ -57,7 +53,7 @@ header width screen status =
 
 contents :: (Int, Int) -> MPD.Response MPD.Status -> MHMC Image
 contents (width, height) _ = do
-    screen <- get
+    screen <- gets getScreen
     case screen of
         Help        -> return $ help height
         Clock       -> liftIO $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
