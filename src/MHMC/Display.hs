@@ -1,4 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
 module MHMC.Display
 (
     Screen(..),
@@ -7,17 +6,18 @@ module MHMC.Display
 ) where
 
 import MHMC.MPD
-import MHMC.Clock
+import MHMC.Display.Clock
+import MHMC.Display.Help
 import MHMC.RWS
 import qualified Network.MPD as MPD
 import Graphics.Vty hiding (Cursor(..))
 
+import Control.Applicative ((<$>))
 import Control.Monad.IO.Class
 import Control.Monad.Trans.RWS.Lazy
 import Data.Default
 import Data.Map (toList)
 import Data.Maybe
-import Data.String.QQ
 import Text.Printf
 
 import System.Time
@@ -59,39 +59,9 @@ contents :: (Int, Int) -> MPD.Response MPD.Status -> MHMC Image
 contents (width, height) _ = do
     screen <- get
     case screen of
-        Help        -> return $ cropBottom (height - 4)
-            $ pad 0 0 0 height
-            $ foldl1 (<->)
-            $ map (string (def `withForeColor` white))
-            $ lines helpinfo
+        Help        -> return $ help height
+        Clock       -> liftIO $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
-    where helpinfo = [s|
-
-    Keys - Movement
---------------------------------
-        Up          : Move Cursor up
-        Down        : Move Cursor down
-
-        1           : Help screen
-        2           : Playlist screen
-        3           : Browse screen
-        4           : Search engine
-        5           : Media library
-        6           : Playlist editor
-        7           : Tag editor
-        8           : Outputs
-        9           : Music visualizer
-        0           : Clock screen
-
-        @           : MPD server info
-
-    Keys - Global
---------------------------------
-        s           : Stop
-        P           : Pause/Play
-        Backspace   : Play current track from the beginning
-
-|]
 
 footer :: Int -> MPD.Response MPD.Status -> Maybe MPD.Song -> Image
 footer width status song =
