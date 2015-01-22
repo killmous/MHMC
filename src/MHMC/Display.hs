@@ -6,8 +6,9 @@ module MHMC.Display
 ) where
 
 import MHMC.MPD
-import MHMC.Display.Clock
 import MHMC.Display.Help
+import MHMC.Display.Playlist
+import MHMC.Display.Clock
 import MHMC.RWS
 import qualified Network.MPD as MPD
 import Graphics.Vty
@@ -58,6 +59,10 @@ contents (width, height) _ = do
     cursor <- gets getCursor
     case screen of
         Help        -> return $ help height cursor
+        Playlist    -> do
+            hash    <- lift $ getPlaylist
+            status  <- lift $ MPD.withMPD MPD.status
+            return $ playlist (width, height) hash status cursor
         Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
@@ -99,5 +104,14 @@ setScreen Help = do
         getCursor = 0,
         getMaxCursor = maxcursor
     }
+
+setScreen Playlist = do
+    status <- lift $ MPD.withMPD MPD.status
+    put $ MHMCState {
+        getScreen = Playlist,
+        getCursor = 0,
+        getMaxCursor = getPlaylistLength status - 1
+    }
+
 setScreen Clock = put $ MHMCState Clock 0 0
 setScreen screen = put $ MHMCState screen 0 0

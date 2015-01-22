@@ -8,13 +8,16 @@ module MHMC.MPD
     getPlaylist,
     getPlaylistLength,
     incVolume,
-    decVolume
+    decVolume,
+    Playlist
     --getDirectory
 ) where
 
 import Network.MPD
 import Data.Map hiding (map)
 import Data.Maybe
+
+type Playlist = [[(Metadata, [Value])]]
 
 getVolume :: Response Status -> Int
 getVolume = either (\_ -> -1) (fromMaybe (-1) . stVolume)
@@ -34,7 +37,7 @@ nowPlaying = (withMPD currentSong) >>= either (\_ -> return Nothing) return
 currentSongTime :: Response Status -> (Double, Seconds)
 currentSongTime = either (\_ -> (0,0)) (fromMaybe (0,0) . stTime)
 
-getPlaylist :: IO [[(Metadata, [Value])]]
+getPlaylist :: IO Playlist
 getPlaylist = (withMPD $ playlistInfo Nothing) >>= either (\_ -> return []) (return . map sgTags) >>= return . map toList
 
 getPlaylistLength :: Response Status -> Int
