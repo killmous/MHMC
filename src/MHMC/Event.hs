@@ -1,13 +1,17 @@
 module MHMC.Event
 (
-	eventLoop
+    eventLoop
 ) where
 
 import Control.Concurrent
 import Graphics.Vty
+import MHMC.RWS
 
-eventLoop :: Vty -> MVar Event -> IO ()
-eventLoop vty currentEvent = do
+eventLoop :: MHMCReader -> IO ()
+eventLoop reader = do
+    let vty = getVty reader
+    let currentEvent = getEvent reader
     e <- nextEvent vty
     tryPutMVar currentEvent e
-    eventLoop vty currentEvent
+    eventLoop reader
+

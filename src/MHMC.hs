@@ -27,13 +27,13 @@ mhmc :: IO ()
 mhmc = do
     vty <- mkVty def
     currentEvent <- newEmptyMVar
-    forkIO $ eventLoop vty currentEvent
     let reader = MHMCReader vty currentEvent
     let state = MHMCState {
         getScreen = Help,
         getCursor = 0,
         getMaxCursor = 0
     }
+    forkIO $ eventLoop reader
     execRWST (setScreen Playlist >> loop) reader state >> return ()
 
 loop :: MHMC ()
@@ -65,6 +65,8 @@ loop = do
             Help      -> decCursor >> loop
             Playlist  -> decCursor >> loop
             otherwise -> loop
+        Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
+        Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
         otherwise                   -> loop
 
 incCursor :: MHMC ()

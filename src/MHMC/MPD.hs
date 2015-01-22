@@ -7,6 +7,8 @@ module MHMC.MPD
     currentSongTime,
     getPlaylist,
     getPlaylistLength,
+    incVolume,
+    decVolume
     --getDirectory
 ) where
 
@@ -37,6 +39,12 @@ getPlaylist = (withMPD $ playlistInfo Nothing) >>= either (\_ -> return []) (ret
 
 getPlaylistLength :: Response Status -> Int
 getPlaylistLength = either (\_ -> 0) (fromInteger . stPlaylistLength)
+
+incVolume :: Response Status -> IO ()
+incVolume status = (withMPD $ setVolume $ if (getVolume status + 1) > 100 then 100 else (getVolume status + 1)) >> return ()
+
+decVolume :: Response Status -> IO ()
+decVolume status = (withMPD $ setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)) >> return ()
 
 {-getDirectory :: Maybe String -> IO [Path]
 getDirectory Nothing = (withMPD $ listAll (Path "")) >>= either (\_ -> return []) return
