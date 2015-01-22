@@ -15,7 +15,7 @@ import qualified Network.MPD as MPD
 
 import Control.Applicative
 import Control.Concurrent
-import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.Lazy
 import Data.Char
 import Data.Default
@@ -29,18 +29,22 @@ mhmc = do
     currentEvent <- newEmptyMVar
     forkIO $ eventLoop vty currentEvent
     let reader = MHMCReader vty currentEvent
-    let state = MHMCState Playlist 0
-    execRWST loop reader state >> return ()
+    let state = MHMCState {
+        getScreen = Help,
+        getCursor = 0,
+        getMaxCursor = 0
+    }
+    execRWST (setScreen Playlist >> loop) reader state >> return ()
 
 loop :: MHMC ()
 loop = do
-    status <- liftIO $ MPD.withMPD MPD.status
-    e <- asks getEvent >>= liftIO . tryTakeMVar
+    status <- lift $ MPD.withMPD MPD.status
+    e <- asks getEvent >>= lift . tryTakeMVar
     vty <- asks getVty
-    (width, height) <- liftIO $ displayBounds $ outputIface vty
+    (width, height) <- lift $ displayBounds $ outputIface vty
     pic <- display (width, height)
     screen <- gets getScreen
-    liftIO $ update vty pic
+    lift $ update vty pic
     case e of
         Just (EvKey (KChar '1') []) -> setScreen Help >> loop
         Just (EvKey (KChar '2') []) -> setScreen Playlist >> loop
@@ -52,7 +56,7 @@ loop = do
         Just (EvKey (KChar '8') []) -> setScreen Outputs >> loop
         Just (EvKey (KChar '9') []) -> setScreen Visualizer >> loop
         Just (EvKey (KChar '0') []) -> setScreen Clock >> loop
-        Just (EvKey (KChar 'q') []) -> liftIO $ shutdown vty
+        Just (EvKey (KChar 'q') []) -> lift $ shutdown vty
         Just (EvKey KDown [])       -> case screen of
             Help      -> incCursor >> loop
             Playlist  -> incCursor >> loop
@@ -62,3 +66,25 @@ loop = do
             Playlist  -> decCursor >> loop
             otherwise -> loop
         otherwise                   -> loop
+
+incCursor :: MHMC ()
+incCursor = do
+    screen <- gets getScreen
+    cursor <- gets getCursor
+    maxcursor <- gets getMaxCursor
+    put $ MHMCState {
+        getScreen = screen,
+        getCursor = min (cursor + 1) maxcursor,
+        getMaxCursor = maxcursor
+    }
+
+decCursor :: MHMC ()
+decCursor = do
+    screen <- gets getScreen
+    cursor <- gets getCursor
+    maxcursor <- gets getMaxCursor
+    put $ MHMCState {
+        getScreen = screen,
+        getCursor = max (cursor - 1) 0,
+        getMaxCursor = maxcursor
+    }

@@ -1,6 +1,7 @@
 module MHMC.Display
 (
     Screen(..),
+    setScreen,
     display
 ) where
 
@@ -11,7 +12,7 @@ import MHMC.RWS
 import qualified Network.MPD as MPD
 import Graphics.Vty
 
-import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.Lazy
 import Data.Default
 import Data.Map (toList)
@@ -34,9 +35,9 @@ instance Show Screen where
 
 display :: (Int, Int) -> MHMC Picture
 display (width, height) = do
-    status <- liftIO $ MPD.withMPD MPD.status
+    status <- lift $ MPD.withMPD MPD.status
     displayContents <- contents (width, height) status
-    song <- liftIO $ nowPlaying
+    song <- lift $ nowPlaying
     screen <- gets getScreen
     let img = header width screen status <->
             displayContents <->
@@ -57,7 +58,7 @@ contents (width, height) _ = do
     cursor <- gets getCursor
     case screen of
         Help        -> return $ help height cursor
-        Clock       -> liftIO $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
+        Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
 footer :: Int -> MPD.Response MPD.Status -> Maybe MPD.Song -> Image
@@ -87,3 +88,16 @@ footer width status song =
 reverseColors :: Attr -> Attr
 reverseColors attr = attr { attrBackColor = attrForeColor attr,
                             attrForeColor = attrBackColor attr}
+
+setScreen :: Screen -> MHMC ()
+setScreen Help = do
+    vty <- asks getVty
+    (width, height) <- lift $ displayBounds $ outputIface vty
+    let maxcursor = (length $ lines helpinfo) - (height - 4)
+    put $ MHMCState {
+        getScreen = Help,
+        getCursor = 0,
+        getMaxCursor = maxcursor
+    }
+setScreen Clock = put $ MHMCState Clock 0 0
+setScreen screen = put $ MHMCState screen 0 0

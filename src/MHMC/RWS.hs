@@ -3,10 +3,7 @@ module MHMC.RWS
     Screen(..),
     MHMCReader(..),
     MHMCState(..),
-    MHMC,
-    setScreen,
-    incCursor,
-    decCursor
+    MHMC
 ) where
 
 import Control.Concurrent
@@ -32,24 +29,8 @@ data MHMCReader = MHMCReader {
 
 data MHMCState = MHMCState {
     getScreen :: Screen,
-    getCursor :: Int
+    getCursor :: Int,
+    getMaxCursor :: Int
 }
-
-setScreen :: Screen -> MHMC ()
-setScreen screen = do
-    cursor <- gets getCursor
-    put $ MHMCState screen cursor
-
-incCursor :: MHMC ()
-incCursor = do
-    cursor <- gets getCursor
-    screen <- gets getScreen
-    put $ MHMCState screen (cursor + 1)
-
-decCursor :: MHMC ()
-decCursor = do
-    cursor <- gets getCursor
-    screen <- gets getScreen
-    put $ MHMCState screen (cursor - 1)
 
 type MHMC = RWST MHMCReader () MHMCState IO

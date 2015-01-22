@@ -2,24 +2,25 @@
 
 module MHMC.Display.Help
 (
+    helpinfo,
     help
 ) where
 
-import Graphics.Vty
+import Control.Monad.Trans.RWS.Lazy
 import Data.Default
 import Data.String.QQ
+import Graphics.Vty
+import MHMC.RWS
 
 help :: Int -> Int -> Image
-help height cursor =
-    let maxcursor = (length $ lines helpinfo) - (height - 4)
-        realcursor = min maxcursor cursor
-    in cropBottom (height - 4)
+help height cursor = cropBottom (height - 4)
     $ pad 0 0 0 height
     $ foldl1 (<->)
     $ map (string (def `withForeColor` white))
-    $ drop realcursor
+    $ drop cursor
     $ lines helpinfo
-    where helpinfo = [s|
+
+helpinfo = [s|
 
     Keys - Movement
 --------------------------------
