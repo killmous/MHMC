@@ -28,11 +28,7 @@ mhmc = do
     vty <- mkVty def
     currentEvent <- newEmptyMVar
     let reader = MHMCReader vty currentEvent
-    let state = MHMCState {
-        getScreen = Help,
-        getCursor = 0,
-        getMaxCursor = 0
-    }
+    let state = MHMCState Help 0 0 0 0
     forkIO $ eventLoop reader
     execRWST (setScreen Playlist >> loop) reader state >> return ()
 
@@ -74,10 +70,14 @@ incCursor = do
     screen <- gets getScreen
     cursor <- gets getCursor
     maxcursor <- gets getMaxCursor
+    scroll <- gets getScroll
+    maxscroll <- gets getMaxScroll
     put $ MHMCState {
         getScreen = screen,
         getCursor = min (cursor + 1) maxcursor,
-        getMaxCursor = maxcursor
+        getMaxCursor = maxcursor,
+        getScroll = if cursor == maxcursor then min (scroll + 1) maxscroll else scroll,
+        getMaxScroll = maxscroll
     }
 
 decCursor :: MHMC ()
@@ -85,8 +85,12 @@ decCursor = do
     screen <- gets getScreen
     cursor <- gets getCursor
     maxcursor <- gets getMaxCursor
+    scroll <- gets getScroll
+    maxscroll <- gets getMaxScroll
     put $ MHMCState {
         getScreen = screen,
         getCursor = max (cursor - 1) 0,
-        getMaxCursor = maxcursor
+        getMaxCursor = maxcursor,
+        getScroll = if cursor == 0 then max (scroll - 1) 0 else scroll,
+        getMaxScroll = maxscroll
     }

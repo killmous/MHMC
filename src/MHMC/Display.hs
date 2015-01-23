@@ -57,10 +57,11 @@ contents :: (Int, Int) -> MPD.Response MPD.Status -> MHMC Image
 contents (width, height) _ = do
     screen <- gets getScreen
     cursor <- gets getCursor
+    scroll <- gets getScroll
     case screen of
-        Help        -> return $ help height cursor
+        Help        -> return $ help height scroll
         Playlist    -> do
-            hash    <- lift $ getPlaylist
+            hash    <- lift $ fmap (drop scroll) getPlaylist
             status  <- lift $ MPD.withMPD MPD.status
             return $ playlist (width, height) hash status cursor
         Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
@@ -98,20 +99,24 @@ setScreen :: Screen -> MHMC ()
 setScreen Help = do
     vty <- asks getVty
     (width, height) <- lift $ displayBounds $ outputIface vty
-    let maxcursor = (length $ lines helpinfo) - (height - 4)
     put $ MHMCState {
         getScreen = Help,
         getCursor = 0,
-        getMaxCursor = maxcursor
+        getMaxCursor = 0,
+        getScroll = 0,
+        getMaxScroll = (length $ lines helpinfo) - (height - 4)
     }
 
 setScreen Playlist = do
+    vty <- asks getVty
+    (width, height) <- lift $ displayBounds $ outputIface vty
     status <- lift $ MPD.withMPD MPD.status
     put $ MHMCState {
         getScreen = Playlist,
         getCursor = 0,
-        getMaxCursor = getPlaylistLength status - 1
+        getMaxCursor = min (height - 4) (getPlaylistLength status) - 1,
+        getScroll = 0,
+        getMaxScroll = (getPlaylistLength status) - (height - 4)
     }
 
-setScreen Clock = put $ MHMCState Clock 0 0
-setScreen screen = put $ MHMCState screen 0 0
+setScreen screen = put $ MHMCState screen 0 0 0 0

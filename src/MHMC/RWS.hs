@@ -30,7 +30,9 @@ data MHMCReader = MHMCReader {
 data MHMCState = MHMCState {
     getScreen :: Screen,
     getCursor :: Int,
-    getMaxCursor :: Int
+    getMaxCursor :: Int,
+    getScroll :: Int,
+    getMaxScroll :: Int
 }
 
 type MHMC = RWST MHMCReader () MHMCState IO
