@@ -40,6 +40,8 @@ loop = do
     (width, height) <- lift $ displayBounds $ outputIface vty
     pic <- display (width, height)
     screen <- gets getScreen
+    scroll <- gets getScroll
+    cursor <- gets getCursor
     lift $ update vty pic
     case e of
         Just (EvKey (KChar '1') []) -> setScreen Help >> loop
@@ -53,6 +55,7 @@ loop = do
         Just (EvKey (KChar '9') []) -> setScreen Visualizer >> loop
         Just (EvKey (KChar '0') []) -> setScreen Clock >> loop
         Just (EvKey (KChar 'q') []) -> lift $ shutdown vty
+        Just (EvKey (KChar 'P') []) -> (lift $ togglePlaying status) >> loop
         Just (EvKey KDown [])       -> case screen of
             Help      -> incCursor >> loop
             Playlist  -> incCursor >> loop
@@ -63,6 +66,9 @@ loop = do
             otherwise -> loop
         Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
         Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
+        Just (EvKey KEnter [])      -> case screen of
+            Playlist  -> (lift $ playSong (scroll + cursor)) >> loop
+            otherwise -> loop
         otherwise                   -> loop
 
 incCursor :: MHMC ()

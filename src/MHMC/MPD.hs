@@ -2,6 +2,7 @@ module MHMC.MPD
 (
     getVolume,
     getState,
+    playSong,
     togglePlaying,
     nowPlaying,
     currentSongTime,
@@ -25,8 +26,11 @@ getVolume = either (\_ -> -1) (fromMaybe (-1) . stVolume)
 getState :: Response Status -> String
 getState = either (\_ -> "Error") (show . stState)
 
-togglePlaying :: (MonadMPD m) => Response Status -> m ()
-togglePlaying status = do
+playSong :: Int -> IO (Response ())
+playSong = withMPD . play . Just
+
+togglePlaying :: Response Status -> IO (Response ())
+togglePlaying status = withMPD $ do
     if getState status == "Playing"
         then pause True
         else play Nothing
