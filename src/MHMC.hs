@@ -67,8 +67,10 @@ loop = do
         Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
         Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
         Just (EvKey KEnter [])      -> case screen of
-            Playlist  -> (lift $ playSong (scroll + cursor)) >> loop
+            Playlist  -> (lift $ playSong $ scroll + cursor) >> loop
             otherwise -> loop
+        Just (EvKey KDel [])        -> case screen of
+            Playlist  -> (lift $ removeSong $ scroll + cursor) >> loop
         otherwise                   -> loop
 
 incCursor :: MHMC ()

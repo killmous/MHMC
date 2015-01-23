@@ -3,8 +3,10 @@ module MHMC.MPD
     getVolume,
     getState,
     playSong,
+    removeSong,
     togglePlaying,
     nowPlaying,
+    currentSongPos,
     currentSongTime,
     getPlaylist,
     getPlaylistLength,
@@ -15,7 +17,7 @@ module MHMC.MPD
 ) where
 
 import Network.MPD
-import Data.Map hiding (map)
+import Data.Map hiding (delete, map)
 import Data.Maybe
 
 type Playlist = [[(Metadata, [Value])]]
@@ -29,6 +31,9 @@ getState = either (\_ -> "Error") (show . stState)
 playSong :: Int -> IO (Response ())
 playSong = withMPD . play . Just
 
+removeSong :: Int -> IO (Response ())
+removeSong = withMPD . delete
+
 togglePlaying :: Response Status -> IO (Response ())
 togglePlaying status = withMPD $ do
     if getState status == "Playing"
@@ -37,6 +42,9 @@ togglePlaying status = withMPD $ do
 
 nowPlaying :: IO (Maybe Song)
 nowPlaying = (withMPD currentSong) >>= either (\_ -> return Nothing) return
+
+currentSongPos :: Response Status -> Int
+currentSongPos = either (\_ -> 0) (fromMaybe 0 . stSongPos)
 
 currentSongTime :: Response Status -> (Double, Seconds)
 currentSongTime = either (\_ -> (0,0)) (fromMaybe (0,0) . stTime)

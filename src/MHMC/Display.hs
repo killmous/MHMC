@@ -58,12 +58,13 @@ contents (width, height) _ = do
     screen <- gets getScreen
     cursor <- gets getCursor
     scroll <- gets getScroll
+    status <- lift $ MPD.withMPD MPD.status
     case screen of
         Help        -> return $ help height scroll
         Playlist    -> do
             hash    <- lift $ fmap (drop scroll) getPlaylist
             status  <- lift $ MPD.withMPD MPD.status
-            return $ playlist (width, height) hash status cursor
+            return $ playlist (width, height) hash status cursor (currentSongPos status - scroll)
         Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
@@ -91,10 +92,6 @@ footer width status song =
     in string (def `withForeColor` yellow) firstRow <-> secondRow
     where minutes time = (show $ div time 60) ++ ":" ++ (printf "%.2d" $ mod time 60)
 
-reverseColors :: Attr -> Attr
-reverseColors attr = attr { attrBackColor = attrForeColor attr,
-                            attrForeColor = attrBackColor attr}
-
 setScreen :: Screen -> MHMC ()
 setScreen Help = do
     vty <- asks getVty
@@ -113,7 +110,7 @@ setScreen Playlist = do
     status <- lift $ MPD.withMPD MPD.status
     put $ MHMCState {
         getScreen = Playlist,
-        getCursor = 0,
+        getCursor = currentSongPos status,
         getMaxCursor = min (height - 4) (getPlaylistLength status) - 1,
         getScroll = 0,
         getMaxScroll = (getPlaylistLength status) - (height - 4)
