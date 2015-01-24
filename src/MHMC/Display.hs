@@ -108,11 +108,13 @@ setScreen Playlist = do
     vty <- asks getVty
     (width, height) <- lift $ displayBounds $ outputIface vty
     status <- lift $ MPD.withMPD MPD.status
+    let pos = currentSongPos status
+    let maxcursor = min (height - 4) (getPlaylistLength status) - 1
     put $ MHMCState {
         getScreen = Playlist,
-        getCursor = currentSongPos status,
-        getMaxCursor = min (height - 4) (getPlaylistLength status) - 1,
-        getScroll = 0,
+        getCursor = min pos maxcursor,
+        getMaxCursor = maxcursor,
+        getScroll = max 0 (pos - maxcursor),
         getMaxScroll = (getPlaylistLength status) - (height - 4)
     }
 
