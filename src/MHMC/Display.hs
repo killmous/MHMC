@@ -117,7 +117,7 @@ setScreen Playlist = do
         getCursor = min pos maxcursor,
         getMaxCursor = maxcursor,
         getScroll = max 0 (pos - maxcursor),
-        getMaxScroll = (getPlaylistLength status) - (height - 4)
+        getMaxScroll = max 0 ((getPlaylistLength status) - (height - 4))
     }
 
 setScreen Browse = do
