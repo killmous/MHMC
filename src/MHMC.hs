@@ -56,13 +56,16 @@ loop = do
         Just (EvKey (KChar '0') []) -> setScreen Clock >> loop
         Just (EvKey (KChar 'q') []) -> lift $ shutdown vty
         Just (EvKey (KChar 'P') []) -> (lift $ togglePlaying status) >> loop
+        Just (EvKey (KChar 's') []) -> (lift stopPlaying) >> loop
         Just (EvKey KDown [])       -> case screen of
             Help      -> incCursor >> loop
             Playlist  -> incCursor >> loop
+            Browse    -> incCursor >> loop
             otherwise -> loop
         Just (EvKey KUp [])         -> case screen of
             Help      -> decCursor >> loop
             Playlist  -> decCursor >> loop
+            Browse    -> decCursor >> loop
             otherwise -> loop
         Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
         Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
@@ -71,6 +74,7 @@ loop = do
             otherwise -> loop
         Just (EvKey KDel [])        -> case screen of
             Playlist  -> (lift $ removeSong $ scroll + cursor) >> loop
+            otherwise -> loop
         otherwise                   -> loop
 
 incCursor :: MHMC ()

@@ -1,24 +1,26 @@
 module MHMC.MPD
 (
+    Playlist,
     getVolume,
     getState,
     playSong,
     removeSong,
     togglePlaying,
     nowPlaying,
+    stopPlaying,
     currentSongPos,
     currentSongTime,
     getPlaylist,
     getPlaylistLength,
     incVolume,
     decVolume,
-    Playlist
-    --getDirectory
+    getDirectory
 ) where
 
 import Network.MPD
 import Data.Map hiding (delete, map)
 import Data.Maybe
+import Data.String
 
 type Playlist = [[(Metadata, [Value])]]
 
@@ -43,6 +45,9 @@ togglePlaying status = withMPD $ do
 nowPlaying :: IO (Maybe Song)
 nowPlaying = (withMPD currentSong) >>= either (\_ -> return Nothing) return
 
+stopPlaying :: IO (Response ())
+stopPlaying = withMPD stop
+
 currentSongPos :: Response Status -> Int
 currentSongPos = either (\_ -> 0) (fromMaybe 0 . stSongPos)
 
@@ -61,6 +66,6 @@ incVolume status = (withMPD $ setVolume $ if (getVolume status + 1) > 100 then 1
 decVolume :: Response Status -> IO ()
 decVolume status = (withMPD $ setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)) >> return ()
 
-{-getDirectory :: Maybe String -> IO [Path]
-getDirectory Nothing = (withMPD $ listAll (Path "")) >>= either (\_ -> return []) return
-getDirectory (Just path) = (withMPD $ listAll (Path path)) >>= either (\_ -> return []) return-}
+getDirectory :: Maybe String -> IO [LsResult]
+getDirectory Nothing = (withMPD $ lsInfo (fromString "")) >>= either (\_ -> return []) return
+getDirectory (Just path) = (withMPD $ lsInfo (fromString path)) >>= either (\_ -> return []) return

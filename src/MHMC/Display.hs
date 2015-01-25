@@ -8,16 +8,17 @@ module MHMC.Display
 import MHMC.MPD
 import MHMC.Display.Help
 import MHMC.Display.Playlist
+import MHMC.Display.Browse
 import MHMC.Display.Clock
 import MHMC.RWS
-import qualified Network.MPD as MPD
-import Graphics.Vty
 
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.Lazy
 import Data.Default
 import Data.Map (toList)
 import Data.Maybe
+import Graphics.Vty
+import qualified Network.MPD as MPD
 import Text.Printf
 
 import System.Time
@@ -65,6 +66,7 @@ contents (width, height) _ = do
             hash    <- lift $ fmap (drop scroll) getPlaylist
             status  <- lift $ MPD.withMPD MPD.status
             return $ playlist (width, height) hash status cursor (currentSongPos status - scroll)
+        Browse      -> lift $ fmap (browse (width, height) cursor) $ fmap (drop scroll) $ getDirectory Nothing
         Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
@@ -116,6 +118,20 @@ setScreen Playlist = do
         getMaxCursor = maxcursor,
         getScroll = max 0 (pos - maxcursor),
         getMaxScroll = (getPlaylistLength status) - (height - 4)
+    }
+
+setScreen Browse = do
+    vty <- asks getVty
+    (width, height) <- lift $ displayBounds $ outputIface vty
+    status <- lift $ MPD.withMPD MPD.status
+    dirLength <- lift $ fmap length $ getDirectory Nothing
+    let maxcursor = min (height - 4) dirLength - 1
+    put $ MHMCState {
+        getScreen = Browse,
+        getCursor = 0,
+        getMaxCursor = maxcursor,
+        getScroll = 0,
+        getMaxScroll = dirLength - (height - 4)
     }
 
 setScreen screen = put $ MHMCState screen 0 0 0 0

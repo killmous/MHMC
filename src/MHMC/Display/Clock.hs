@@ -3,10 +3,8 @@ module MHMC.Display.Clock
     clock
 ) where
 
-import Control.Monad.Trans.RWS.Lazy
 import Data.Default
 import Graphics.Vty
-import MHMC.RWS
 import System.Time
 import Text.Printf
 
