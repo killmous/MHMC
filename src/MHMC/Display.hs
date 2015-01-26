@@ -55,16 +55,14 @@ header width screen status =
     where displayRight image = translateX (width - imageWidth image) image
 
 contents :: (Int, Int) -> MPD.Response MPD.Status -> MHMC Image
-contents (width, height) _ = do
+contents (width, height) status = do
     screen <- gets getScreen
     cursor <- gets getCursor
     scroll <- gets getScroll
-    status <- lift $ MPD.withMPD MPD.status
     case screen of
         Help        -> return $ help height scroll
         Playlist    -> do
             hash    <- lift $ fmap (drop scroll) getPlaylist
-            status  <- lift $ MPD.withMPD MPD.status
             return $ playlist (width, height) hash status cursor (currentSongPos status - scroll)
         Browse      -> lift $ fmap (browse (width, height) cursor) $ fmap (drop scroll) $ getDirectory Nothing
         Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime

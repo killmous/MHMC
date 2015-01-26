@@ -20,4 +20,5 @@ browse (width, height) cursor res =
 display :: [LsResult] -> [String]
 display = map $ \val -> case val of
         LsDirectory dir -> "[" ++ (toString dir) ++ "]"
-        otherwise       -> "..."
+        LsPlaylist name -> toString name
+        otherwise       -> "IT'S A SONG"
