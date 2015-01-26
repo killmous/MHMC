@@ -32,7 +32,8 @@ data MHMCState = MHMCState {
     getCursor :: Int,
     getMaxCursor :: Int,
     getScroll :: Int,
-    getMaxScroll :: Int
+    getMaxScroll :: Int,
+    getPath :: Maybe String
 }
 
 type MHMC = RWST MHMCReader () MHMCState IO

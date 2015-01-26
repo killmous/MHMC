@@ -28,7 +28,7 @@ mhmc = do
     vty <- mkVty def
     currentEvent <- newEmptyMVar
     let reader = MHMCReader vty currentEvent
-    let state = MHMCState Help 0 0 0 0
+    let state = MHMCState Help 0 0 0 0 Nothing
     forkIO $ eventLoop reader
     execRWST (setScreen Playlist >> loop) reader state >> return ()
 
@@ -57,6 +57,8 @@ loop = do
         Just (EvKey (KChar 'q') []) -> lift $ shutdown vty
         Just (EvKey (KChar 'P') []) -> (lift $ togglePlaying status) >> loop
         Just (EvKey (KChar 's') []) -> (lift stopPlaying) >> loop
+        Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
+        Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
         Just (EvKey KDown [])       -> case screen of
             Help      -> incCursor >> loop
             Playlist  -> incCursor >> loop
@@ -67,13 +69,14 @@ loop = do
             Playlist  -> decCursor >> loop
             Browse    -> decCursor >> loop
             otherwise -> loop
-        Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
-        Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
         Just (EvKey KEnter [])      -> case screen of
             Playlist  -> (lift $ playSong $ scroll + cursor) >> loop
             otherwise -> loop
         Just (EvKey KDel [])        -> case screen of
             Playlist  -> (lift $ removeSong $ scroll + cursor) >> loop
+            otherwise -> loop
+        Just (EvKey (KChar ' ') []) -> case screen of
+            Browse    -> loop
             otherwise -> loop
         otherwise                   -> loop
 
@@ -89,7 +92,8 @@ incCursor = do
         getCursor = min (cursor + 1) maxcursor,
         getMaxCursor = maxcursor,
         getScroll = if cursor == maxcursor then min (scroll + 1) maxscroll else scroll,
-        getMaxScroll = maxscroll
+        getMaxScroll = maxscroll,
+        getPath = Nothing
     }
 
 decCursor :: MHMC ()
@@ -104,5 +108,6 @@ decCursor = do
         getCursor = max (cursor - 1) 0,
         getMaxCursor = maxcursor,
         getScroll = if cursor == 0 then max (scroll - 1) 0 else scroll,
-        getMaxScroll = maxscroll
+        getMaxScroll = maxscroll,
+        getPath = Nothing
     }

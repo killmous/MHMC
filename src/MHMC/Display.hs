@@ -101,7 +101,8 @@ setScreen Help = do
         getCursor = 0,
         getMaxCursor = 0,
         getScroll = 0,
-        getMaxScroll = (length $ lines helpinfo) - (height - 4)
+        getMaxScroll = (length $ lines helpinfo) - (height - 4),
+        getPath = Nothing
     }
 
 setScreen Playlist = do
@@ -115,7 +116,8 @@ setScreen Playlist = do
         getCursor = min pos maxcursor,
         getMaxCursor = maxcursor,
         getScroll = max 0 (pos - maxcursor),
-        getMaxScroll = max 0 ((getPlaylistLength status) - (height - 4))
+        getMaxScroll = max 0 ((getPlaylistLength status) - (height - 4)),
+        getPath = Nothing
     }
 
 setScreen Browse = do
@@ -129,7 +131,8 @@ setScreen Browse = do
         getCursor = 0,
         getMaxCursor = maxcursor,
         getScroll = 0,
-        getMaxScroll = dirLength - (height - 4)
+        getMaxScroll = dirLength - (height - 4),
+        getPath = Nothing
     }
 
-setScreen screen = put $ MHMCState screen 0 0 0 0
+setScreen screen = put $ MHMCState screen 0 0 0 0 Nothing

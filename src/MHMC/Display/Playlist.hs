@@ -16,17 +16,17 @@ playlist (width, height) hash status cursor songpos =
     let cursorString = (take cursor $ repeat "") ++ ["->"] ++ (take height $ repeat "")
         cursorImg = vertCat $ map (string (def `withForeColor` white)) cursorString
         artists = map (lookup MPD.Artist) hash
-        artistsString = S.fromList $ map (MPD.toString . (!! 0) . fromMaybe []) artists
+        artistsString = S.fromList $ map (fromMaybe [] . fmap (MPD.toString . (!! 0))) artists
         artistsImg = vertCat . toList $ S.mapWithIndex
             (\line str -> string (test line (def `withForeColor` red)) str) formatStr
             where formatStr = if S.null artistsString then S.singleton "Empty Playlist" else artistsString
         titles = map (lookup MPD.Title) hash
-        titlesString = S.fromList $ map (MPD.toString . (!! 0) . fromMaybe []) titles
+        titlesString = S.fromList $ map (fromMaybe [] . fmap (MPD.toString . (!! 0))) titles
         titlesImg = vertCat . toList $ S.mapWithIndex
             (\line str -> string (test line (def `withForeColor` blue)) str) formatStr
             where formatStr = if S.null artistsString then S.singleton "Empty Playlist" else titlesString
         albums = map (lookup MPD.Album) hash
-        albumsString = S.fromList $ map (MPD.toString . (!! 0) . fromMaybe []) albums
+        albumsString = S.fromList $ map (fromMaybe [] . fmap (MPD.toString . (!! 0))) albums
         albumsImg = vertCat . toList $ S.mapWithIndex
             (\line str -> string (test line (def `withForeColor` green)) str) formatStr
             where formatStr = if S.null artistsString then S.singleton "Empty Playlist" else albumsString
