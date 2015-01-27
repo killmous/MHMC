@@ -15,7 +15,8 @@ module MHMC.MPD
     incVolume,
     decVolume,
     clearQueue,
-    getDirectory
+    getDirectory,
+    addDirectory
 ) where
 
 import Network.MPD
@@ -73,3 +74,10 @@ clearQueue = withMPD clear
 getDirectory :: Maybe String -> IO [LsResult]
 getDirectory Nothing = (withMPD $ lsInfo (fromString "")) >>= either (\_ -> return []) return
 getDirectory (Just path) = (withMPD $ lsInfo (fromString path)) >>= either (\_ -> return []) return
+
+addDirectory :: [LsResult] -> Int -> IO (Response ())
+addDirectory res pos =
+    case res !! pos of
+        LsDirectory dir -> withMPD $ add dir
+        LsSong song     -> withMPD $ add $ sgFilePath song
+        LsPlaylist pl   -> withMPD $ load pl

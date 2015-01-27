@@ -83,7 +83,11 @@ loop = do
             Playlist  -> (lift $ removeSong $ scroll + cursor) >> loop
             otherwise -> loop
         Just (EvKey (KChar ' ') []) -> case screen of
-            Browse    -> loop
+            Browse    -> do
+                path <- gets getPath
+                dir <- lift $ getDirectory path
+                lift $ addDirectory dir $ scroll + cursor
+                loop
             otherwise -> loop
         otherwise                   -> loop
 
