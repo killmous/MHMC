@@ -7,12 +7,14 @@ module MHMC.Display.Browse
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.RWS.Lazy
 import Data.Default
+import qualified Data.Map as M
+import Data.Maybe
 import Graphics.Vty
 import MHMC.MPD
 import MHMC.RWS
-import Network.MPD (LsResult(..), toString)
+import qualified Network.MPD as MPD
 
-browse :: (Int, Int) -> Int -> [LsResult] -> Image
+browse :: (Int, Int) -> Int -> [MPD.LsResult] -> Image
 browse (width, height) cursor res =
     let cursorString = (take cursor $ repeat "") ++ ["->"] ++ (take height $ repeat "")
         cursorImg = vertCat $ map (string (def `withForeColor` white)) cursorString
@@ -21,18 +23,18 @@ browse (width, height) cursor res =
         $ cursorImg <|> (vertCat
         $ map (string (def `withForeColor` white)) $ display res)
 
-display :: [LsResult] -> [String]
+display :: [MPD.LsResult] -> [String]
 display = map $ \val -> case val of
-        LsDirectory dir -> "[" ++ (toString dir) ++ "]"
-        LsPlaylist name -> toString name
-        otherwise       -> "IT'S A SONG"
+        MPD.LsDirectory dir -> "[" ++ (MPD.toString dir) ++ "]"
+        MPD.LsPlaylist name -> MPD.toString name
+        MPD.LsSong song     -> fromMaybe "" $ fmap (MPD.toString . (!! 0)) $ M.lookup MPD.Title $ MPD.sgTags song
 
-changeDirectory :: [LsResult] -> Int -> MHMC ()
+changeDirectory :: [MPD.LsResult] -> Int -> MHMC ()
 changeDirectory res pos = do
         state <- get
         vty <- asks getVty
         let path = map (\val -> case val of
-                            LsDirectory dir -> Just $ toString dir
+                            MPD.LsDirectory dir -> Just $ MPD.toString dir
                             otherwise -> Nothing)
                         res !! pos
         (width, height) <- lift $ displayBounds $ outputIface vty
