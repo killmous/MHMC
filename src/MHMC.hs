@@ -4,6 +4,7 @@ module MHMC
 ) where
 
 import MHMC.Display
+import MHMC.Display.Browse
 import MHMC.Event
 import MHMC.MPD
 import MHMC.RWS
@@ -71,6 +72,11 @@ loop = do
             otherwise -> loop
         Just (EvKey KEnter [])      -> case screen of
             Playlist  -> (lift $ playSong $ scroll + cursor) >> loop
+            Browse    -> do
+                path <- gets getPath
+                dir <- lift $ getDirectory path
+                changeDirectory dir $ scroll + cursor
+                loop
             otherwise -> loop
         Just (EvKey KDel [])        -> case screen of
             Playlist  -> (lift $ removeSong $ scroll + cursor) >> loop
@@ -82,32 +88,22 @@ loop = do
 
 incCursor :: MHMC ()
 incCursor = do
-    screen <- gets getScreen
+    state <- get
     cursor <- gets getCursor
     maxcursor <- gets getMaxCursor
     scroll <- gets getScroll
     maxscroll <- gets getMaxScroll
-    put $ MHMCState {
-        getScreen = screen,
+    put $ state {
         getCursor = min (cursor + 1) maxcursor,
-        getMaxCursor = maxcursor,
-        getScroll = if cursor == maxcursor then min (scroll + 1) maxscroll else scroll,
-        getMaxScroll = maxscroll,
-        getPath = Nothing
+        getScroll = if cursor == maxcursor then min (scroll + 1) maxscroll else scroll
     }
 
 decCursor :: MHMC ()
 decCursor = do
-    screen <- gets getScreen
+    state <- get
     cursor <- gets getCursor
-    maxcursor <- gets getMaxCursor
     scroll <- gets getScroll
-    maxscroll <- gets getMaxScroll
-    put $ MHMCState {
-        getScreen = screen,
+    put $ state {
         getCursor = max (cursor - 1) 0,
-        getMaxCursor = maxcursor,
-        getScroll = if cursor == 0 then max (scroll - 1) 0 else scroll,
-        getMaxScroll = maxscroll,
-        getPath = Nothing
+        getScroll = if cursor == 0 then max (scroll - 1) 0 else scroll
     }

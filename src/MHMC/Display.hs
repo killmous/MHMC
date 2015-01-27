@@ -59,12 +59,13 @@ contents (width, height) status = do
     screen <- gets getScreen
     cursor <- gets getCursor
     scroll <- gets getScroll
+    path <- gets getPath
     case screen of
         Help        -> return $ help height scroll
         Playlist    -> do
             hash    <- lift $ fmap (drop scroll) getPlaylist
             return $ playlist (width, height) hash status cursor (currentSongPos status - scroll)
-        Browse      -> lift $ fmap (browse (width, height) cursor) $ fmap (drop scroll) $ getDirectory Nothing
+        Browse      -> lift $ fmap (browse (width, height) cursor) $ fmap (drop scroll) $ getDirectory path
         Clock       -> lift $ fmap (clock (width, height)) $ getClockTime >>= toCalendarTime
         otherwise   -> return $ cropBottom (height - 4) $ pad 0 0 0 height emptyImage
 
@@ -131,7 +132,7 @@ setScreen Browse = do
         getCursor = 0,
         getMaxCursor = maxcursor,
         getScroll = 0,
-        getMaxScroll = dirLength - (height - 4),
+        getMaxScroll = max 0 $ dirLength - (height - 4),
         getPath = Nothing
     }
 
