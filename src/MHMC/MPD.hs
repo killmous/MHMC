@@ -14,6 +14,7 @@ module MHMC.MPD
     getPlaylistLength,
     incVolume,
     decVolume,
+    clearQueue,
     getDirectory
 ) where
 
@@ -65,6 +66,9 @@ incVolume status = (withMPD $ setVolume $ if (getVolume status + 1) > 100 then 1
 
 decVolume :: Response Status -> IO ()
 decVolume status = (withMPD $ setVolume $ if (getVolume status - 1) < 0 then 0 else (getVolume status - 1)) >> return ()
+
+clearQueue :: IO (Response())
+clearQueue = withMPD clear
 
 getDirectory :: Maybe String -> IO [LsResult]
 getDirectory Nothing = (withMPD $ lsInfo (fromString "")) >>= either (\_ -> return []) return

@@ -55,6 +55,7 @@ loop = do
         Just (EvKey (KChar '8') []) -> setScreen Outputs >> loop
         Just (EvKey (KChar '9') []) -> setScreen Visualizer >> loop
         Just (EvKey (KChar '0') []) -> setScreen Clock >> loop
+        Just (EvKey (KChar 'c') []) -> (lift clearQueue) >> setScreen Playlist >> loop
         Just (EvKey (KChar 'q') []) -> lift $ shutdown vty
         Just (EvKey (KChar 'P') []) -> (lift $ togglePlaying status) >> loop
         Just (EvKey (KChar 's') []) -> (lift stopPlaying) >> loop
