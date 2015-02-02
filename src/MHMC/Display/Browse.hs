@@ -1,7 +1,8 @@
 module MHMC.Display.Browse
 (
     browse,
-    changeDirectory
+    changeDirectory,
+    upDirectory
 ) where
 
 import Control.Monad.Trans.Class
@@ -21,7 +22,7 @@ browse (width, height) cursor res =
     in cropBottom (height - 4)
         $ pad 0 0 0 height
         $ cursorImg <|> (vertCat
-        $ map (string (def `withForeColor` white)) $ display res)
+            $ map (string (def `withForeColor` white)) $ display res)
 
 display :: [MPD.LsResult] -> [String]
 display = map $ \val -> case val of
@@ -47,3 +48,19 @@ changeDirectory res pos = do
             getMaxScroll = max 0 $ dirLength - (height - 4),
             getPath = path
         }
+
+upDirectory :: MHMC ()
+upDirectory = do
+    state <- get
+    vty <- asks getVty
+    let path = fmap (\path -> let newpath = takeWhile (/= '/') path in if newpath == path then "" else newpath) $ getPath state
+    (width, height) <- lift $ displayBounds $ outputIface vty
+    dirLength <- lift $ fmap length $ getDirectory path
+    let maxcursor = min (height - 4) dirLength - 1
+    put $ state {
+        getCursor = 0,
+        getMaxCursor = maxcursor,
+        getScroll = 0,
+        getMaxScroll = max 0 $ dirLength - (height - 4),
+        getPath = path
+    }

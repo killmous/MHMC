@@ -8,6 +8,7 @@ module MHMC.MPD
     togglePlaying,
     nowPlaying,
     stopPlaying,
+    restartPlaying,
     currentSongPos,
     currentSongTime,
     getPlaylist,
@@ -49,6 +50,9 @@ nowPlaying = (withMPD currentSong) >>= either (\_ -> return Nothing) return
 
 stopPlaying :: IO (Response ())
 stopPlaying = withMPD stop
+
+restartPlaying :: Response Status -> IO (Response ())
+restartPlaying = either (return . Left) (withMPD . play . stSongPos)
 
 currentSongPos :: Response Status -> Int
 currentSongPos = either (\_ -> 0) (fromMaybe 0 . stSongPos)

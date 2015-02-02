@@ -59,6 +59,7 @@ loop = do
         Just (EvKey (KChar 'q') []) -> lift $ shutdown vty
         Just (EvKey (KChar 'P') []) -> (lift $ togglePlaying status) >> loop
         Just (EvKey (KChar 's') []) -> (lift stopPlaying) >> loop
+        Just (EvKey KBS [])         -> (lift $ restartPlaying status) >> loop
         Just (EvKey KLeft [])       -> (lift $ decVolume status) >> loop
         Just (EvKey KRight [])      -> (lift $ incVolume status) >> loop
         Just (EvKey KDown [])       -> case screen of
@@ -81,6 +82,9 @@ loop = do
             otherwise -> loop
         Just (EvKey KDel [])        -> case screen of
             Playlist  -> (lift $ removeSong $ scroll + cursor) >> loop
+            otherwise -> loop
+        Just (EvKey KEsc [])        -> case screen of
+            Browse    -> upDirectory >> loop
             otherwise -> loop
         Just (EvKey (KChar ' ') []) -> case screen of
             Browse    -> do
