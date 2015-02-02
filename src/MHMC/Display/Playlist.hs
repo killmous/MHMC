@@ -18,17 +18,17 @@ playlist (width, height) hash status cursor songpos =
         artists = map (lookup MPD.Artist) hash
         artistsString = S.fromList $ map (fromMaybe [] . fmap (MPD.toString . (!! 0))) artists
         artistsImg = vertCat . toList $ S.mapWithIndex
-            (\line str -> string (test line (def `withForeColor` red)) str) formatStr
+            (\line str -> string (test line (def `withForeColor` white)) str) formatStr
             where formatStr = if S.null artistsString then S.singleton "Empty Playlist" else artistsString
         titles = map (lookup MPD.Title) hash
         titlesString = S.fromList $ map (fromMaybe [] . fmap (MPD.toString . (!! 0))) titles
         titlesImg = vertCat . toList $ S.mapWithIndex
-            (\line str -> string (test line (def `withForeColor` blue)) str) formatStr
+            (\line str -> string (test line (def `withForeColor` white)) str) formatStr
             where formatStr = if S.null artistsString then S.singleton "Empty Playlist" else titlesString
         albums = map (lookup MPD.Album) hash
         albumsString = S.fromList $ map (fromMaybe [] . fmap (MPD.toString . (!! 0))) albums
         albumsImg = vertCat . toList $ S.mapWithIndex
-            (\line str -> string (test line (def `withForeColor` green)) str) formatStr
+            (\line str -> string (test line (def `withForeColor` white)) str) formatStr
             where formatStr = if S.null artistsString then S.singleton "Empty Playlist" else albumsString
     in cropBottom (height - 4)
         $ pad 0 0 0 height (cursorImg
@@ -38,7 +38,7 @@ playlist (width, height) hash status cursor songpos =
             <|> (string def " ")
             <|> (sizeof 0.25 albumsImg))
     where sizeof frac image = cropRight (fromEnum (fromIntegral width * frac)) $ pad 0 0 (fromEnum (fromIntegral width * frac)) 0 image
-          test line = if line == songpos then reverseColors else id
+          test line = if line == songpos then \attr -> withStyle attr bold else id
 
 reverseColors :: Attr -> Attr
 reverseColors attr = attr { attrBackColor = attrForeColor attr,
